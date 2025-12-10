@@ -33,79 +33,141 @@ I built a secure AWS application infrastructure where:
 
 <br>
 <h3> STEP-BY-STEP flow </h3>
+
 <b> This is how each Terraform resource works in the overall system. </b>
 
 **Start point:** A public user opens a browser and requests **`http://my-app.example.com/`** 
 <br>
 
-<h3> 1. DNS (optional step) </h3> 
-Browser prepares an HTTP request for the ALB’s public IP(s). <br>
-Client DNS lookup returns the ALB’s public DNS name (from Route53 or external DNS).
+<h2> 1. DNS (optional step) </h2> 
+Browser prepares an HTTP request for the ALB’s public IP(s). 
+
+Client DNS lookup returns the ALB’s public DNS name (from **Route53** or external DNS).
 
 
-<h3> 2. Client → Internet → Internet Gateway (IGW) </h3>
-The Internet Gateway simply acts as the VPC’s public entry/exit point.  <br>
-The IG is the VPC’s internet door — it lets traffic for your public IPs (like ALB or NAT) enter the VPC and lets responses go back out, but it does nothing else: no security, no filtering, no NAT logic, and no load balancing — it just passes packets in and out.
 
 
-<h3> 3. IGW → ALB (Application Load Balancer) node in a public subnet </h3>
+<h2> 2. Client → Internet → Internet Gateway (IGW) </h2>
+The Internet Gateway simply acts as the VPC’s public entry/exit point.  
+
+**The IGW is the VPC’s internet door** — it lets traffic for your public IPs (like ALB or NAT) enter the VPC and lets responses go back out, but it does nothing else: no security, no filtering, no NAT logic, and no load balancing — it just passes packets in and out.
+
+
+
+
+<h2> 3. IGW → ALB (Application Load Balancer) node in a public subnet </h2>
 
 After the packet passes through the **IGW**, it is delivered to **an ALB node running inside one of your public subnets.**  <br>
 Before the ALB even sees the request, the **ALB security group (`alb_sg`) is evaluated:** 
-- Ingress rule: 0.0.0.0/0 → TCP:80 ✅ (This allows any internet client to open a connection to the ALB.)
-  Because security group's are stateful, return traffic is automatically allowed.
-- open egress rule (0.0.0.0/0) simply lets the ALB connect to anything new (like targets or health checks), not for responses.
-flow:
+- **Ingress rule**: `0.0.0.0/0 → TCP:80` ✅ (This allows any internet client to open a connection to the ALB.)
+(Security Groups are **stateful**, so once inbound traffic is allowed, **return traffic is automatically permitted** —
+ no explicit egress rule is required for responses.)
+
+- open **egress rule** `(0.0.0.0/0)` simply lets the ALB connect to anything new (like targets or health checks), not for responses.
+  
+**flow:**
 > Client → IGW → ALB public node → alb_sg allows port 80 → TCP session established → request ready for listener routing.
 
 
-<h3> 4. ALB Listener receives the request </h3>
-Once the TCP connection is established with the ALB node, the raw network traffic is handed to the ALB Listener (aws_lb_listener), which is the component that actually understands HTTP requests and decides where they should go.
-1. Listens on port 80
-The listener is bound to the ALB on TCP:80.
-Any HTTP request reaching the ALB is delivered directly to this listener.
-2. Consults the Target Group
-The listener does not pick instances directly.
-It asks the Target Group (app_tg):
+
+
+<h2> 4. ALB Listener receives the request </h2>
+
+Once the TCP connection is established with the ALB node, the raw network traffic is handed to the  **ALB Listener (`aws_lb_listener`)** , which is the component that actually understands HTTP requests and decides where they should go.
+
+<b> 1. Listens on port 80 </b>
+- The listener is bound to the ALB on **TCP:80**.
+- Any HTTP request reaching the ALB is delivered directly to this listener.
+
+<b> 2. Consults the Target Group </b>
+- The listener does  **not** select EC2 instances directly.
+- Instead, it queries the **Target Group (`app_tg`):** <br>
 “Which targets are registered AND currently healthy?”
 
 
-<h3> 5. Target Group health & selection </h3>
-Once the listener forwards traffic to app_tg (aws_lb_target_group), the entire decision of who actually receives the request is controlled by the Target Group’s health system.
-1. The target group holds private IPs of EC2 instances that your ASG registers automatically.(These instances live in private subnets — no public IPs.)
-2. TG Continuously runs health checks, and The response MUST be: Status = 200
-(Any timeout, connection failure, or wrong status = unhealthy.)
-3. Only healthy instances are eligible to receive traffic. unhealthy instances are removed from load-balancing rotation. The listener stops sending requests to it completely.
-When it recovers: It passes checks again → re-enters rotation automatically.
-4. For each client request:
-Listener requests a healthy target list from app_tg,
-app_tg chooses one instance (round-robin by default),
+
+
+<h2> 5. Target Group health & selection </h2>
+
+Once the listener forwards traffic to **`app_tg` (`aws_lb_target_group`)**, the responsibility for choosing **which EC2 instance actually receives the request** is handled entirely by the **Target Group’s health and routing system**.
+
+<b>How it works</b>
+1.  **Registered targets**
+   - The target group holds **private IPs of EC2 instances** that your **Auto Scaling Group (ASG)** registers automatically.
+   - These instances live in **private subnets** and **do not have public IPs**.
+
+2. **Continuous health checks**
+   - The target group continuously sends health probes to each instance.
+   - A target is considered healthy only if the response is:
+     ```
+     HTTP 200
+     ```
+   - Any of the following marks a target **unhealthy**:
+     - Timeout / no response
+     - Connection failure
+     - Wrong HTTP status code
+
+3. **Traffic eligibility**
+   - Only **healthy** instances are eligible to receive traffic.
+   - **Unhealthy** instances are **removed from the load-balancing rotation** — the listener completely stops routing requests to them.
+   - When an instance recovers:
+     ```
+     Passes health checks → Marked healthy → Automatically re-enters rotation
+     ```
+
+4. **Request distribution**
+   
+   For every incoming client request: <br>
+   Listener requests healthy targets from app_tg → app_tg selects one instance (round-robin by default) → traffic forwarded to selected EC2 target
 
 
 
-<h3> 6. ALB opens a new connection → private EC2 instance </h3>
-Once the Target Group selects a healthy EC2 instance, the ALB performs its real job: it becomes a reverse proxy between the internet client and your private server.
-1. The original client-to-ALB TCP connection stays open.Separately, the ALB node creates its own new TCP connection: 
+
+<h2> 6. ALB opens a new connection → private EC2 instance </h2>
+
+Once the Target Group selects a healthy EC2 instance, the ALB performs its real job — it acts as a **reverse proxy** between the internet client and your private server.
+
+<b> 1. Dual TCP connections: </b> 
+- The original **client → ALB** TCP connection remains open.
+- Separately, the ALB creates a **new outbound TCP connection** to the selected target:
+```
 Source: ALB node ENI (public subnet)
 Destination: EC2 private IP :80
-- This traffic is now 100% private
-2. Security Group evaluation (the real gatekeeper)
-The incoming packet hits the instance’s app_sg.
-Rule: 
-allow inbound TCP 80 from source SG = alb_sg
-This means:
-The packet is accepted ONLY if the source belongs to the ALB’s security group. Any other source — even from inside the VPC — is blocked.
+```
+This traffic is now 100% private
+  
+<b> 2. Security Group evaluation (the real gatekeeper) </b> 
 
-(Q: Why SG reference is better than CIDR??
-- ALB IP addresses change constantly. 
-- Using CIDR rules like 10.0.0.0/8 would: Allow anything in the VPC to hit your app(unsafe).
-- Using: security_groups = [alb_sg.id]
-means:
-- ONLY the ALB is trusted
+The inbound packet reaches the EC2 instance and hits the **application security group (`app_sg`)**.
+
+**Inbound rule**
+- Allow **TCP:80**
+- Source = **Security Group reference → `alb_sg`**
+
+This means:
+
+- ✅ Traffic is accepted **ONLY if** the source belongs to the **ALB’s security group**
+- ❌ Any other source — even from inside the VPC — is blocked
+  
+<h3> Q: Why SG reference is better than CIDR?? </h3>
+
+**Problem with CIDR:**
+- ALB IP addresses change constantly.
+- Using CIDR rules like `10.0.0.0/8` would:
+  - Allow **anything inside the VPC** to access your app
+  - Create a large **blast radius** (unsafe)
+
+**Correct approach:**
+```hcl
+security_groups = [alb_sg.id]
+```
+- **ONLY the ALB is trusted**
 - Nothing else can directly reach your app, zero dependency on changing IP ranges.
 
 
-<h3> 7. EC2 receives request and nginx responds </h3>
+
+
+<h2> 7. EC2 receives request and nginx responds </h2>
 Once the ALB’s forwarded request reaches the private EC2 instance, control fully moves to your application layer.
 What happens on the instance:
 1. nginx is already running: Installed and started by your user_data at boot.
@@ -120,7 +182,9 @@ The outgoing response from EC2 → ALB is automatically allowed.
 No explicit egress allow rule is required for reply packets.
 
 
-<h3> 8. ALB → Client (response) </h3>
+
+
+<h2> 8. ALB → Client (response) </h2>
 Once the ALB receives the HTTP 200 response from the EC2 backend, it finishes its proxy role and sends that response straight back to the user over the same already-open TCP connection that was established between the client and the ALB at the start.
 technically:
 1. ALB gets the backend response
