@@ -49,8 +49,9 @@ The IG is the VPC’s internet door — it lets traffic for your public IPs (lik
 
 
 <h3> 3. IGW → ALB (Application Load Balancer) node in a public subnet </h3>
-After the packet passes through the IGW, it is delivered to an ALB node running inside one of your public subnets.  <br>
-Before the ALB even sees the request, the alb_sg security group is checked: 
+
+After the packet passes through the **IGW**, it is delivered to **an ALB node running inside one of your public subnets.**  <br>
+Before the ALB even sees the request, the **ALB security group (`alb_sg`) is evaluated:** 
 - Ingress rule: 0.0.0.0/0 → TCP:80 ✅ (This allows any internet client to open a connection to the ALB.)
   Because security group's are stateful, return traffic is automatically allowed.
 - open egress rule (0.0.0.0/0) simply lets the ALB connect to anything new (like targets or health checks), not for responses.
