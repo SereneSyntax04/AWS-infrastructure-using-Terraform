@@ -29,35 +29,36 @@ I built a secure AWS application infrastructure where:
 - Private servers access the internet outbound via a NAT gateway
 - No server is publicly accessible directly
 
+---
 
-<br> <br>
+<br>
 <h3> STEP-BY-STEP flow </h3>
 <b> This is how each Terraform resource works in the overall system. </b>
 
-Start point: A public user opens a browser and requests http://my-app.example.com/
-<br> <br>
-1. DNS (optional step)
-Browser prepares an HTTP request for the ALB’s public IP(s).
+**Start point:** A public user opens a browser and requests **`http://my-app.example.com/`** 
+<br>
+
+<h3> 1. DNS (optional step) </h3> 
+Browser prepares an HTTP request for the ALB’s public IP(s). <br>
 Client DNS lookup returns the ALB’s public DNS name (from Route53 or external DNS).
 
 
-2. Client → Internet → Internet Gateway (IGW)
-The Internet Gateway simply acts as the VPC’s public entry/exit point.
+<h3> 2. Client → Internet → Internet Gateway (IGW) </h3>
+The Internet Gateway simply acts as the VPC’s public entry/exit point.  <br>
 The IG is the VPC’s internet door — it lets traffic for your public IPs (like ALB or NAT) enter the VPC and lets responses go back out, but it does nothing else: no security, no filtering, no NAT logic, and no load balancing — it just passes packets in and out.
 
 
-3. IGW → ALB (Application Load Balancer) node in a public subnet
-After the packet passes through the IGW, it is delivered to an ALB node running inside one of your public subnets
-Before the ALB even sees the request, the alb_sg security group is checked:
-Ingress rule: 0.0.0.0/0 → TCP:80 ✅ (This allows any internet client to open a connection to the ALB.)
-Because security group's are stateful, return traffic is automatically allowed.
-open egress rule (0.0.0.0/0) simply lets the ALB connect to anything new (like targets or health checks), not for responses.
+<h3> 3. IGW → ALB (Application Load Balancer) node in a public subnet </h3>
+After the packet passes through the IGW, it is delivered to an ALB node running inside one of your public subnets.  <br>
+Before the ALB even sees the request, the alb_sg security group is checked: 
+- Ingress rule: 0.0.0.0/0 → TCP:80 ✅ (This allows any internet client to open a connection to the ALB.)
+  Because security group's are stateful, return traffic is automatically allowed.
+- open egress rule (0.0.0.0/0) simply lets the ALB connect to anything new (like targets or health checks), not for responses.
 flow:
+> Client → IGW → ALB public node → alb_sg allows port 80 → TCP session established → request ready for listener routing.
 
-Client → IGW → ALB public node → alb_sg allows port 80 → TCP session established → request ready for listener routing.
 
-
-4. ALB Listener receives the request
+<h3> 4. ALB Listener receives the request </h3>
 Once the TCP connection is established with the ALB node, the raw network traffic is handed to the ALB Listener (aws_lb_listener), which is the component that actually understands HTTP requests and decides where they should go.
 1. Listens on port 80
 The listener is bound to the ALB on TCP:80.
@@ -68,7 +69,7 @@ It asks the Target Group (app_tg):
 “Which targets are registered AND currently healthy?”
 
 
-5. Target Group health & selection
+<h3> 5. Target Group health & selection </h3>
 Once the listener forwards traffic to app_tg (aws_lb_target_group), the entire decision of who actually receives the request is controlled by the Target Group’s health system.
 1. The target group holds private IPs of EC2 instances that your ASG registers automatically.(These instances live in private subnets — no public IPs.)
 2. TG Continuously runs health checks, and The response MUST be: Status = 200
@@ -81,7 +82,7 @@ app_tg chooses one instance (round-robin by default),
 
 
 
-6. ALB opens a new connection → private EC2 instance
+<h3> 6. ALB opens a new connection → private EC2 instance </h3>
 Once the Target Group selects a healthy EC2 instance, the ALB performs its real job: it becomes a reverse proxy between the internet client and your private server.
 1. The original client-to-ALB TCP connection stays open.Separately, the ALB node creates its own new TCP connection: 
 Source: ALB node ENI (public subnet)
@@ -103,7 +104,7 @@ means:
 - Nothing else can directly reach your app, zero dependency on changing IP ranges.
 
 
-7. EC2 receives request and nginx responds
+<h3> 7. EC2 receives request and nginx responds </h3>
 Once the ALB’s forwarded request reaches the private EC2 instance, control fully moves to your application layer.
 What happens on the instance:
 1. nginx is already running: Installed and started by your user_data at boot.
@@ -118,7 +119,7 @@ The outgoing response from EC2 → ALB is automatically allowed.
 No explicit egress allow rule is required for reply packets.
 
 
-8. ALB → Client (response)
+<h3> 8. ALB → Client (response) </h3>
 Once the ALB receives the HTTP 200 response from the EC2 backend, it finishes its proxy role and sends that response straight back to the user over the same already-open TCP connection that was established between the client and the ALB at the start.
 technically:
 1. ALB gets the backend response
@@ -141,10 +142,13 @@ Client ↔ ALB
 ALB ↔ EC2
 
 
+---
 
-
-Full end-to-end round-trip example: 
+<h3> Full end-to-end round-trip example: </h3>
 Client → IGW → Public Subnet (ALB) → Listener → Target Group → EC2 Private Subnet (nginx) → Response → ALB → IGW →
 Client
 
-The client requests the website or app hosted on EC2 instances in private subnets. Using this architecture, the client can access the app without ever exposing the EC2 private IPs publicly, because the ALB handles all public traffic, and stateful security groups ensure only allowed connections pass while responses flow back automatically.
+---
+
+<br>
+<h2> The client requests the website or app hosted on EC2 instances in private subnets. Using this architecture, the client can access the app without ever exposing the EC2 private IPs publicly, because the ALB handles all public traffic, and stateful security groups ensure only allowed connections pass while responses flow back automatically. <h2> 
