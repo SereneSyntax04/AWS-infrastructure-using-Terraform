@@ -10,29 +10,6 @@ aws configure set cli_pager ""
 
 ---
 <h1 align='center'> 📂 Repository Structure </h1>
-```
-AWS-infrastructure-using-Terraform/
-└────────envs/
-|          └── prod/
-|                └──.terraform.lock.hcl
-|                |─── modules.tf
-|                |─── outputs.tf      
-|                |─── providers.tf
-|                |─── terraform.tfvars.example (dummy env values)
-|                |─── variables.tf
-|                |─── > .terraform (provider cache + modules)                  
-|                |─── terraform.tfstate (state file – never commit this)       
-|                └── terraform.tfvars (your actual environment values)        
-|──────────modules/
-|              └── vpc/
-|                └── main.tf
-|                |── output.tf
-|                └── variables.tf
-|
-|────────── .gitignore
-|────────── DEVELOPMENT_GUIDE.md
-└───────── README.md
-```
 
 ```
 AWS-infrastructure-using-Terraform/
