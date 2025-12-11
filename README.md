@@ -14,10 +14,10 @@ The Terraform code in this repository provisions the entire architecture. All ne
 
 <h2>Task: Write Terraform code to allow users to access a website hosted on EC2 instances in private subnets. </h2>
 
-> Refer to the given architecture to understand the traffic flow and the AWS services involved (e.g., ALB, security groups, NAT Gateway, public/private subnets).
+<h3> Refer to the given architecture to understand the AWS services involved (e.g., ALB, security groups, NAT Gateway, public/private subnets). </h3>
 
 <p align="center">
-  <img src="" alt="🏗️ FULL ARCHITECTURE DIAGRAM " width="400"/>
+  <img src="./assets/images/AWS VPC Architecture.png" alt="🏗️ FULL ARCHITECTURE DIAGRAM " width="400"/>
 </p>
 
 
@@ -305,3 +305,7 @@ This architecture makes the whole thing work seamlessly:
 
 <h3 align='center'> Exposed? Never. Accessible? Always. </h3>
 
+
+<p align="center">
+  <img src="" alt="🏗️ FULL ARCHITECTURE traffic flow DIAGRAM " width="400"/>
+</p>
