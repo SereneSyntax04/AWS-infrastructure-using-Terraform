@@ -1,0 +1,580 @@
+--- NOTES & TIPS ---
+• When using AWS CLI with LocalStack, either pass --region every time or run `aws configure` with region us-east-1 and fake creds (test/test).
+• If AWS CLI output is paged with “-- More --”, add --no-cli-pager or `aws configure set cli_pager ""`.
+• Always run terraform destroy BEFORE deleting .terraform or stopping LocalStack — otherwise Terraform can’t reach the local provider to delete resources.
+
+
+
+🚀 STEP-BY-STEP DEPLOYMENT
+
+STEP 1:
+START LOCALSTACK (Docker)
+> docker rm -f localstack
+> docker run -d --name localstack -p 4566:4566 localstack/localstack
+Check container is running:
+> docker ps
+remove any prior .terraform folder:
+> Remove-Item -Recurse -Force .terraform -ErrorAction SilentlyContinue 
+
+
+STEP 2
+RUN TERRAFORM
+Go to env folder: cd terraform-infra/envs/prod
+Initialize Terraform:
+> terraform init
+> terraform validate
+Deploy VPC:
+> terraform apply -auto-approve
+
+STEP 3
+VERIFY — AWS CLI (LocalStack)
+Configure the AWS CLI:
+> aws configure
+AWS Access Key ID     : test
+AWS Secret Access Key: test
+Default region name  : us-east-1
+Default output format: json
+
+List VPCs:
+> aws ec2 describe-vpcs --endpoint-url=http://localhost:4566
+this was the output::
+PS C:\Users\sshrivastav\OneDrive - Scitara Technologies Private Limited\TFscitara\terraform-infra\envs\prod> aws ec2 describe-vpcs --endpoint-url=http://localhost:4566
+{
+    "Vpcs": [
+        {
+            "OwnerId": "000000000000",
+            "InstanceTenancy": "default",
+            "Ipv6CidrBlockAssociationSet": [],
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-3e52a22dc91b15542",
+                    "CidrBlock": "172.31.0.0/16",
+                    "CidrBlockState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "IsDefault": true,
+            "Tags": [],
+            "VpcId": "vpc-7f893f36b371ca000",
+            "State": "available",
+            "CidrBlock": "172.31.0.0/16",
+            "DhcpOptionsId": "default"
+        },
+        {
+            "OwnerId": "000000000000",
+            "InstanceTenancy": "default",
+            "Ipv6CidrBlockAssociationSet": [],
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-864267d939885135c",
+                    "CidrBlock": "10.0.0.0/16",
+                    "CidrBlockState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-vpc"
+                }
+            ],
+            "VpcId": "vpc-19b85f255584df2ea",
+            "State": "available",
+            "CidrBlock": "10.0.0.0/16",
+            "DhcpOptionsId": "default"
+        }
+    ]
+}
+
+
+STEP 4
+Verify Subnets
+aws ec2 describe-subnets --region us-east-1 --endpoint-url=http://localhost:4566
+{
+    "Subnets": [
+        {
+            "AvailabilityZoneId": "use1-az6",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-4ae4d77a19548728d",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-4ae4d77a19548728d",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.0.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1a",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az6",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-PrivateSubnet-1"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-d996b1b4cf158b670",
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name"
+            },
+            "SubnetId": "subnet-d996b1b4cf158b670",
+            "State": "available",
+            "VpcId": "vpc-19b85f255584df2ea",
+            "CidrBlock": "10.0.101.0/24",
+            "AvailableIpAddressCount": 251,
+            "AvailabilityZone": "us-east-1a",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false
+        },
+        {
+            "AvailabilityZoneId": "use1-az6",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-PublicSubnet-1"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-87608b57be9f990eb",
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name"
+            },
+            "SubnetId": "subnet-87608b57be9f990eb",
+            "State": "available",
+            "VpcId": "vpc-19b85f255584df2ea",
+            "CidrBlock": "10.0.1.0/24",
+            "AvailableIpAddressCount": 251,
+            "AvailabilityZone": "us-east-1a",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az1",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-65cd27aa5910effc0",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-65cd27aa5910effc0",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.16.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1b",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az1",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-PrivateSubnet-2"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-af3f69600d2db2d9f",
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name"
+            },
+            "SubnetId": "subnet-af3f69600d2db2d9f",
+            "State": "available",
+            "VpcId": "vpc-19b85f255584df2ea",
+            "CidrBlock": "10.0.102.0/24",
+            "AvailableIpAddressCount": 251,
+            "AvailabilityZone": "us-east-1b",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false
+        },
+        {
+            "AvailabilityZoneId": "use1-az1",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-PublicSubnet-2"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-a2d114171fe71c559",
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name"
+            },
+            "SubnetId": "subnet-a2d114171fe71c559",
+            "State": "available",
+            "VpcId": "vpc-19b85f255584df2ea",
+            "CidrBlock": "10.0.2.0/24",
+            "AvailableIpAddressCount": 251,
+            "AvailabilityZone": "us-east-1b",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az2",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-a9dddb8ef596271f4",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-a9dddb8ef596271f4",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.32.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1c",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az4",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-488ddd3316d14dfb2",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-488ddd3316d14dfb2",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.48.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1d",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az3",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-372afc9f091d1f066",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-372afc9f091d1f066",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.64.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1e",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        },
+        {
+            "AvailabilityZoneId": "use1-az5",
+            "OwnerId": "000000000000",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [],
+            "SubnetArn": "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-3a3ad4ccc2a7605c9",
+            "Ipv6Native": false,
+            "SubnetId": "subnet-3a3ad4ccc2a7605c9",
+            "State": "available",
+            "VpcId": "vpc-7f893f36b371ca000",
+            "CidrBlock": "172.31.80.0/20",
+            "AvailableIpAddressCount": 4091,
+            "AvailabilityZone": "us-east-1f",
+            "DefaultForAz": true,
+            "MapPublicIpOnLaunch": true
+        }
+    ]
+}
+
+
+STEP 5
+aws ec2 describe-nat-gateways --region us-east-1 --endpoint-url=http://localhost:4566
+{
+    "NatGateways": [
+        {
+            "CreateTime": "2025-12-08T09:02:35.294000+00:00",
+            "NatGatewayAddresses": [
+                {
+                    "AllocationId": "eipalloc-7dc6b4434853ad91d",
+                    "NetworkInterfaceId": "eni-0f76488d76bced77d",
+                    "PrivateIp": "10.5.92.171",
+                    "PublicIp": "127.96.90.142",
+                    "AssociationId": "eipassoc-4fbfc6c0e6df532e6"
+                }
+            ],
+            "NatGatewayId": "nat-ccf5853dd7623a185",
+            "State": "available",
+            "SubnetId": "subnet-3804a42418c483c76",
+            "VpcId": "vpc-4c1610b40dd590013",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-nat-1"
+                }
+            ],
+            "ConnectivityType": "public"
+        }
+    ]
+}
+
+STEP 6
+aws ec2 describe-addresses --region us-east-1 --endpoint-url=http://localhost:4566  
+{
+    "Addresses": [
+        {
+            "AllocationId": "eipalloc-7dc6b4434853ad91d",
+            "AssociationId": "eipassoc-4fbfc6c0e6df532e6",
+            "Domain": "vpc",
+            "NetworkInterfaceId": "eni-0f76488d76bced77d",
+            "NetworkInterfaceOwnerId": "000000000000",
+            "PrivateIpAddress": "10.5.92.171",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-nat-eip-1"
+                }
+            ],
+            "InstanceId": "",
+            "PublicIp": "127.96.90.142"
+        }
+    ]
+}
+
+STEP 7
+aws ec2 describe-route-tables --region us-east-1 --endpoint-url=http://localhost:4566
+{
+    "RouteTables": [
+        {
+            "Associations": [
+                {
+                    "Main": true,
+                    "RouteTableAssociationId": "rtbassoc-e728e989736b463a0",
+                    "RouteTableId": "rtb-312670b3effdb39b3",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "RouteTableId": "rtb-312670b3effdb39b3",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "172.31.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                }
+            ],
+            "Tags": [],
+            "VpcId": "vpc-9717eb018a5c513b1",
+            "OwnerId": "000000000000"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": true,
+                    "RouteTableAssociationId": "rtbassoc-393cbd32981c17c5a",
+                    "RouteTableId": "rtb-53cb81a25dd957a68",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "RouteTableId": "rtb-53cb81a25dd957a68",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                }
+            ],
+            "Tags": [],
+            "VpcId": "vpc-4c1610b40dd590013",
+            "OwnerId": "000000000000"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-83c4805d9c6a817a2",
+                    "RouteTableId": "rtb-2ac6d84c3ee52ea8a",
+                    "SubnetId": "subnet-0f6c3420a12b6829e",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                },
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-480c0b6b3c7a71084",
+                    "RouteTableId": "rtb-2ac6d84c3ee52ea8a",
+                    "SubnetId": "subnet-3804a42418c483c76",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "RouteTableId": "rtb-2ac6d84c3ee52ea8a",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-dff31cb7e1a35b9aa",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-public-rt"
+                }
+            ],
+            "VpcId": "vpc-4c1610b40dd590013",
+            "OwnerId": "000000000000"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-186727866461660ec",
+                    "RouteTableId": "rtb-e815cc14d532819d4",
+                    "SubnetId": "subnet-253c32c15692ef154",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                },
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-c50d3c822932b781b",
+                    "RouteTableId": "rtb-e815cc14d532819d4",
+                    "SubnetId": "subnet-41109e9e305f2fd28",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "RouteTableId": "rtb-e815cc14d532819d4",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "NatGatewayId": "nat-ccf5853dd7623a185",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "prod-private-rt"
+                }
+            ],
+            "VpcId": "vpc-4c1610b40dd590013",
+            "OwnerId": "000000000000"
+        }
+    ]
+}
+
+
+
+
+
+🛠 STEP — FIX WHEN TYPO ERROR STILL SHOWS
+
+(Use this when you corrected a typo in Terraform code but the same validation error still appears)
+
+STEP 1 — COMPLETELY CLEAR TERRAFORM CACHE
+Delete cached providers & modules:
+> Remove-Item -Recurse -Force .terraform
+
+(Optional — if things are really stuck)
+Delete old state files:
+> Remove-Item -Force terraform.tfstate
+> Remove-Item -Force terraform.tfstate.backup
+
+STEP 2 — RE-INITIALIZE TERRAFORM
+Re-download providers/modules from scratch:
+> terraform init -reconfigure
+
+STEP 3 — VALIDATE AGAIN
+Re-run validation:
+> terraform validate
+
+✅ If no errors appear, the cache was the issue.
+
+
+
+
+
+🧹 STEP-BY-STEP CLEANUP
+STEP 1 — Destroy Terraform infra
+> terraform destroy -auto-approve
+What this does:
+Deletes your VPC
+Deletes subnets
+Deletes route tables
+Deletes IGW
+Leaves LocalStack default stuff untouched (expected)
+
+STEP 2 — Verify everything is gone
+> aws ec2 describe-vpcs --no-cli-pager --region us-east-1 --endpoint-url=http://localhost:4566
+You should now see ONLY ONE VPC: "IsDefault": true
+Check subnets:
+> aws ec2 describe-subnets --no-cli-pager --region us-east-1 --endpoint-url=http://localhost:4566
+You should see ONLY 172.31.*.* subnets (the defaults)
+
+STEP 3 — Delete Terraform state + cache
+> Remove-Item -Recurse -Force .terraform
+> Remove-Item -Force terraform.tfstate
+> Remove-Item -Force terraform.tfstate.backup
+
+This wipes:
+Provider cache
+Local state
+Backup state
+⚠️ This is safe AFTER terraform destroy because nothing remains to manage.
+
+STEP 4 — Stop & remove Docker LocalStack
+Check container name first: 
+> docker ps
+Stop it:
+> docker stop localstack
+Remove it:
+> docker rm localstack
+Optional: remove image if you want it totally gone
+> docker rmi localstack/localstack
+
+STEP 5 — Verify Docker is clean
+> docker ps
+No containers should show.
+
+STEP 6 — Final sanity check
+Your machine should now be:
+✅ No Terraform state
+✅ No Terraform infra in LocalStack
+✅ No Docker containers running
+You’re back to a 100% clean slate.
