@@ -72,7 +72,7 @@ The API for service 'elbv2' is not included in your current license plan or has 
 ---
 
 <br>
-<h3> STEP-BY-STEP flow </h3>
+<h1 align="center"> STEP-BY-STEP flow </h1>
 
 <b> This is how each Terraform resource works in the overall system. </b>
 
