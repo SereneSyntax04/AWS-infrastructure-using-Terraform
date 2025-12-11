@@ -31,6 +31,46 @@ I built a secure AWS application infrastructure where:
 
 ---
 
+<h1 align='center'>⚠️ LocalStack Limitation (IMPORTANT) </h1>
+
+<h2>This project supports real AWS end-to-end, but when testing locally with LocalStack Free, you will NOT be able to run the full Terraform apply. </h2>
+
+### LocalStack Free does NOT support:
+
+- aws_lb (Application Load Balancer)
+
+- aws_lb_target_group
+
+- (ELBv2 API)
+
+### If you run:
+```
+terraform apply --auto-approve
+```
+
+### You will receive:
+```
+The API for service 'elbv2' is not included in your current license plan or has not yet been emulated.
+```
+
+### What this means
+
+- Your Terraform code is correct
+
+- Your architecture is correct
+
+- The issue is NOT your fault
+
+- LocalStack Free simply cannot emulate ALB
+
+### Workaround
+
+- Use real AWS Free Tier to deploy the full infra
+
+- Or upgrade LocalStack → Pro for ALB support
+
+---
+
 <br>
 <h3> STEP-BY-STEP flow </h3>
 

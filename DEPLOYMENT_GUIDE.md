@@ -66,6 +66,22 @@ Remove-Item -Recurse -Force .terraform -ErrorAction SilentlyContinue
 ```
 
 ---
+<br>
+<h2 align='center'> Terraform Apply Failure </h2>
+
+## 🚫 LocalStack Free ALB Limitation (Read Before Applying)
+LocalStack Free does not include support for the ELBv2 service. Therefore, Terraform will fail when creating:
+- aws_lb
+- aws_lb_target_group
+
+Error:
+```
+The API for service 'elbv2' is not included in your current license plan
+```
+
+<h2>You can still use real AWS to deploy the architecture successfully.</h2>
+<br>
+
 
 # STEP 2: RUN TERRAFORM
 
