@@ -315,3 +315,15 @@ docker rmi localstack/localstack
 docker ps
 ```
 - No containers should show.
+
+
+
+## STEP 6 — Final  check
+
+Your machine should now be:
+
+- ✅ No Terraform state
+- ✅ No Terraform infra in LocalStack
+- ✅ No Docker containers running
+
+You’re back to a 100% clean slate.
