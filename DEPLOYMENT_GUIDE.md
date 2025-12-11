@@ -34,6 +34,32 @@ AWS-infrastructure-using-Terraform/
 └───────── README.md
 ```
 
+```
+AWS-infrastructure-using-Terraform/
+│
+├── envs/
+│ └── prod/
+│  ├── .terraform.lock.hcl
+│  ├── modules.tf
+│  ├── outputs.tf
+│  ├── providers.tf
+│  ├── terraform.tfvars.example # example values for users
+│  ├── variables.tf
+│  ├── .terraform/ # provider cache (ignored by git)
+│  ├── terraform.tfstate # state file — never commit
+│  └── terraform.tfvars # your secrets/env values — never commit
+│
+├── modules/
+│ └── vpc/
+│  ├── main.tf
+│  ├── output.tf
+│  └── variables.tf
+│
+├── .gitignore
+├── DEVELOPMENT_GUIDE.md
+└── README.md
+```
+
 ---
 
 <h2 align = 'center'> 🚀 STEP-BY-STEP DEPLOYMENT </h2>
