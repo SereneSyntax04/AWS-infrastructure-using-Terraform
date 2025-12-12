@@ -73,6 +73,7 @@ The API for service 'elbv2' is not included in your current license plan or has 
 
 <br>
 <h1 align="center"> STEP-BY-STEP flow </h1>
+<h3> Refer to the complete architecture diagram with flow at the end for full clarity. </h3>
 
 <b> This is how each Terraform resource works in the overall system. </b>
 
