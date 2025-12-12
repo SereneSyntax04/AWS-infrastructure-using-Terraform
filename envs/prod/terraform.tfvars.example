@@ -1,0 +1,37 @@
+# terraform.tfvars.example
+# Copy this to terraform.tfvars and replace with your own environment values
+
+env = "<environment_name>"   # e.g., dev, prod
+
+# VPC CIDR block
+vpc_cidr = "<vpc_cidr>"     # e.g., 10.0.0.0/16
+
+# Public subnets
+public_subnets = [
+  "<public_subnet_1>",      # e.g., 10.0.1.0/24
+  "<public_subnet_2>"       # e.g., 10.0.2.0/24
+]
+
+# Private subnets
+private_subnets = [
+  "<private_subnet_1>",     # e.g., 10.0.101.0/24
+  "<private_subnet_2>"      # e.g., 10.0.102.0/24
+]
+
+# Availability zones
+availability_zone = [
+  "<az_1>",                 # e.g., us-east-1a
+  "<az_2>"                  # e.g., us-east-1b
+]
+
+
+# Optional placeholder for AWS keys (if used locally)
+# aws_access_key = "YOUR_ACCESS_KEY_HERE"
+# aws_secret_key = "YOUR_SECRET_KEY_HERE"
+
+
+
+
+#Copy this file 
+#bash:
+cp terraform.tfvars.example terraform.tfvars
