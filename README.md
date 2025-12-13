@@ -306,7 +306,8 @@ This architecture makes the whole thing work seamlessly:
 
 <h3 align='center'> Exposed? Never. Accessible? Always. </h3>
 
+<br>
 
 <p align="center">
-  <img src="./assets/images/Architecture_vpc.png" alt="🏗️ FULL ARCHITECTURE traffic flow DIAGRAM " width="1000"/>
+  <img src="./assets/images/Architecture_vpc.png" alt="🏗️ FULL ARCHITECTURE traffic flow DIAGRAM " width="1200"/>
 </p>
