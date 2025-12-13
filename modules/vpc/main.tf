@@ -377,7 +377,7 @@ resource "aws_autoscaling_group" "app_asg" {
   #CAPACITY RULES-
   min_size         = 1
   desired_capacity = 2
-  max_size         = 3
+  max_size         = 6
   # So at boot:ASG creates → 2 EC2 instances, If one dies:ASG launches another → back to 2
 
   # SUBNET PLACEMENT: Create these EC2 instances ONLY in private subnets.
