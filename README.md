@@ -308,5 +308,5 @@ This architecture makes the whole thing work seamlessly:
 
 
 <p align="center">
-  <img src="./assets/images/Architecture_vpc.png" alt="🏗️ FULL ARCHITECTURE traffic flow DIAGRAM " width="400"/>
+  <img src="./assets/images/Architecture_vpc.png" alt="🏗️ FULL ARCHITECTURE traffic flow DIAGRAM " width="1000"/>
 </p>
