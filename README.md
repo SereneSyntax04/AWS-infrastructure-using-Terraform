@@ -19,7 +19,7 @@ The Terraform code in this repository provisions the entire architecture. All ne
 <p align="center">
   <img src="./assets/images/AWS VPC Architecture.png" alt="🏗️ FULL ARCHITECTURE DIAGRAM " width="400"/>
 </p>
-
+<h4 align='center'> This is just for the reference actual architecture is attached at the end. </h4>
 
 <h3> 🌍 CORE IDEA </h3>
 
