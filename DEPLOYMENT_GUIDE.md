@@ -45,23 +45,23 @@ AWS-infrastructure-using-Terraform/
 
 ### Remove existing LocalStack container if any
 
-```
+```powershell
 docker rm -f localstack
 ```
 
 ### Start LocalStack container
 
-```
+```powershell
 docker run -d --name localstack -p 4566:4566 localstack/localstack
 ```
 
 ### Check if container is running
-```
+```powershell
 docker ps
 ```
 
 ### Remove any prior .terraform folder (PowerShell)
-```
+```powershell
 Remove-Item -Recurse -Force .terraform -ErrorAction SilentlyContinue 
 ```
 
@@ -88,13 +88,13 @@ The API for service 'elbv2' is not included in your current license plan
 <b> Go to the environment folder:   cd  <folder-path>/envs/prod </b>
 
 ### Initialize Terraform:
-```
+```powershell
 terraform init
 terraform validate
 ```
 
 ### Deploy the VPC and resources:
-```
+```powershell
 terraform apply -auto-approve
 ```
 
@@ -103,7 +103,7 @@ terraform apply -auto-approve
 # STEP 3: VERIFY — AWS CLI (LocalStack)
 
 ### Configure the AWS CLI: 
-```
+```powershell
 aws configure
  AWS Access Key ID     : test
  AWS Secret Access Key : test
@@ -112,7 +112,7 @@ aws configure
 ```
 
 ### List VPCs to verify deployment:
-```
+```powershell
 aws ec2 describe-vpcs --endpoint-url=http://localhost:4566
 ```
 
@@ -131,7 +131,7 @@ Focus on the "VpcId" that matches the one defined in your .tfvars file — this 
 # STEP 4:  VERIFY SUBNETS
 
 ### Command to list subnets:
-```
+```powershell
 aws ec2 describe-subnets --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 <b> What to look for: </b>
@@ -151,7 +151,7 @@ Focus on the "SubnetId" and "CidrBlock" values to ensure they match your configu
 # STEP 5:VERIFY NAT GATEWAYS
 
 ### Command to list NAT Gateways:
-```
+```powershell
 aws ec2 describe-nat-gateways --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 
@@ -176,7 +176,7 @@ Ignore any default resources created by LocalStack.
 # STEP 6: VERIFY ELASTIC IP ADDRESSES
 
 ### Command to list Elastic IPs:
-```
+```powershell
 aws ec2 describe-addresses --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 
@@ -201,7 +201,7 @@ Ignore any default or unrelated addresses that LocalStack may have.
 # STEP 7: VERIFY ROUTE TABLES
 
 ###  Command to list route tables:
-```
+```powershell
 aws ec2 describe-route-tables --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 
@@ -242,13 +242,13 @@ Ignore default route tables created by LocalStack.
 ## STEP 1 — COMPLETELY CLEAR TERRAFORM CACHE
 
 ### Delete cached providers & modules:
-```
+```powershell
 Remove-Item -Recurse -Force .terraform
 ```
 
 ### (Optional — if things are really stuck)
 <b> Delete old state files: </b>
-```
+```powershell
 Remove-Item -Force terraform.tfstate
 Remove-Item -Force terraform.tfstate.backup
 ```
@@ -256,14 +256,14 @@ Remove-Item -Force terraform.tfstate.backup
 ## STEP 2 — RE-INITIALIZE TERRAFORM
 
 ### Re-download providers/modules from scratch:
-```
+```powershell
 terraform init -reconfigure
 ```
 
 ## STEP 3 — VALIDATE AGAIN
 
 ### Re-run validation:
-```
+```powershell
 terraform validate
 ```
 
@@ -283,7 +283,7 @@ terraform validate
 
 ## STEP 1 — Destroy Terraform infra
 
-```
+```powershell
 terraform destroy -auto-approve
 ```
 <b>What this does: </b>
@@ -302,20 +302,20 @@ terraform destroy -auto-approve
 ## STEP 2 — Verify everything is gone
 
 **Check VPCs:**
-```
+```powershell
 aws ec2 describe-vpcs --no-cli-pager --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 > You should now see ONLY ONE VPC: "IsDefault": true
 
 **Check subnets:**
-```
+```powershell
 aws ec2 describe-subnets --no-cli-pager --region us-east-1 --endpoint-url=http://localhost:4566
 ```
 > You should see ONLY default subnets (172.31.*.*)
 
 
 ## STEP 3 — Delete Terraform state + cache
-```
+```powershell
 Remove-Item -Recurse -Force .terraform
 Remove-Item -Force terraform.tfstate
 Remove-Item -Force terraform.tfstate.backup
@@ -334,28 +334,28 @@ Remove-Item -Force terraform.tfstate.backup
 ## STEP 4 — Stop & remove Docker LocalStack
 
 ### Check container name:
-```
+```powershell
 docker ps
 ```
 
 ### Stop the container:
-```
+```powershell
 docker stop localstack
 ```
 
 ### Remove the container:
-```
+```powershell
 docker rm localstack
 ```
 
 ### (Optional — remove image completely)
-```
+```powershell
 docker rmi localstack/localstack
 ```
 
 
 ## STEP 5 — Verify Docker is clean
-```
+```powershell
 docker ps
 ```
 - No containers should show.
