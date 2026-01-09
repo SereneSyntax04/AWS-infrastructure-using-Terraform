@@ -319,6 +319,7 @@ aws ec2 describe-subnets --no-cli-pager --region us-east-1 --endpoint-url=http:/
 Remove-Item -Recurse -Force .terraform
 Remove-Item -Force terraform.tfstate
 Remove-Item -Force terraform.tfstate.backup
+Remove-Item terraform.lock.hcl -Force
 ```
 <b>This wipes: </b>
 
